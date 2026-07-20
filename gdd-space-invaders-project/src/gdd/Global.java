@@ -29,10 +29,10 @@ public class Global {
     public static final int PLAYER_HEIGHT = 20; // Doubled from 10
 
     // Images
-    public static final String IMG_ENEMY = "src/images/alien.png";
-    public static final String IMG_PLAYER = "src/images/player.png";
-    public static final String IMG_SHOT = "src/images/shot.png";
-    public static final String IMG_EXPLOSION = "src/images/explosion.png";
-    public static final String IMG_TITLE = "src/images/title.png";
-    public static final String IMG_POWERUP_SPEEDUP = "src/images/powerup-s.png";
+    public static final String IMG_ENEMY = "gdd-space-invaders-project/src/images/alien.png";
+    public static final String IMG_PLAYER = "gdd-space-invaders-project/src/images/player.png";
+    public static final String IMG_SHOT = "gdd-space-invaders-project/src/images/shot.png";
+    public static final String IMG_EXPLOSION = "gdd-space-invaders-project/src/images/explosion.png";
+    public static final String IMG_TITLE = "gdd-space-invaders-project/src/images/title.png";
+    public static final String IMG_POWERUP_SPEEDUP = "gdd-space-invaders-project/src/images/powerup-s.png";
 }

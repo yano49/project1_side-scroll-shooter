@@ -69,7 +69,7 @@ public class TitleScene extends JPanel {
 
     private void initAudio() {
         try {
-            String filePath = "src/audio/title.wav";
+            String filePath = "gdd-space-invaders-project/src/audio/title.wav";
             audioPlayer = new AudioPlayer(filePath);
 
             audioPlayer.play();
