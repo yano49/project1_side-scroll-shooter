@@ -7,6 +7,9 @@ import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
 import gdd.powerup.SpeedUp;
 import gdd.sprite.Alien1;
+import gdd.sprite.Boss;
+import gdd.sprite.BossAttack;
+import gdd.sprite.BossBullet;
 import gdd.sprite.Enemy;
 import gdd.sprite.Explosion;
 import gdd.sprite.MiniBoss;
@@ -36,7 +39,11 @@ public class Scene1 extends JPanel {
     private List<Enemy> enemies;
     private List<Explosion> explosions;
     private List<Shot> shots;
+    private List<BossBullet> bossBullets;
     private Player player;
+    private Boss boss;
+    private BossAttack bossAttack;
+    private boolean bossSpawned;
     // private Shot shot;
 
     final int BLOCKHEIGHT = 50;
@@ -90,6 +97,7 @@ public class Scene1 extends JPanel {
     private AudioPlayer audioPlayer;
     private int lastRowToShow;
     private int firstRowToShow;
+    private static final int BOSS_SPAWN_FRAME = 650;
 
     public Scene1(Game game) {
         this.game = game;
@@ -161,6 +169,10 @@ public class Scene1 extends JPanel {
         powerups = new ArrayList<>();
         explosions = new ArrayList<>();
         shots = new ArrayList<>();
+        bossBullets = new ArrayList<>();
+        bossAttack = new BossAttack();
+        boss = null;
+        bossSpawned = false;
 
         // for (int i = 0; i < 4; i++) {
         // for (int j = 0; j < 6; j++) {
@@ -343,6 +355,8 @@ public class Scene1 extends JPanel {
             drawAliens(g);
             drawPlayer(g);
             drawShot(g);
+            drawBoss(g);
+            drawBossBullets(g);
 
         } else {
 
@@ -377,6 +391,10 @@ public class Scene1 extends JPanel {
 
     private void update() {
 
+        if (!bossSpawned && frame >= BOSS_SPAWN_FRAME) {
+            boss = new Boss();
+            bossSpawned = true;
+        }
 
         // Check enemy spawn
         // TODO this approach can only spawn one enemy at a frame
@@ -418,6 +436,26 @@ public class Scene1 extends JPanel {
         // player
         player.act();
 
+        if (boss != null && boss.isVisible()) {
+            boss.act();
+            bossBullets.addAll(bossAttack.update(boss, player));
+        }
+
+        List<BossBullet> bossBulletsToRemove = new ArrayList<>();
+        for (BossBullet bullet : bossBullets) {
+            if (bullet.isVisible()) {
+                bullet.act();
+                if (bullet.collidesWith(player)) {
+                    bullet.die();
+                    player.setDying(true);
+                    bossBulletsToRemove.add(bullet);
+                }
+            } else {
+                bossBulletsToRemove.add(bullet);
+            }
+        }
+        bossBullets.removeAll(bossBulletsToRemove);
+
         // Power-ups
         for (PowerUp powerup : powerups) {
             if (powerup.isVisible()) {
@@ -443,6 +481,23 @@ public class Scene1 extends JPanel {
             if (shot.isVisible()) {
                 int shotX = shot.getX();
                 int shotY = shot.getY();
+
+                if (boss != null && boss.isVisible() && shot.collidesWith(boss)) {
+                    boss.takeDamage(1);
+                    shot.die();
+                    shotsToRemove.add(shot);
+
+                    if (boss.isDying()) {
+                        explosions.add(new Explosion(
+                                boss.getX() + Boss.WIDTH / 2,
+                                boss.getY() + Boss.HEIGHT / 2));
+                        boss.die();
+                        bossBullets.clear();
+                        inGame = false;
+                        message = "Final boss defeated!";
+                    }
+                    continue;
+                }
 
                 for (Enemy enemy : enemies) {
                     // Collision detection: shot and enemy
@@ -575,7 +630,34 @@ public class Scene1 extends JPanel {
                 }
             }
         }
-         */
+        */
+    }
+
+    private void drawBoss(Graphics g) {
+        if (boss == null || !boss.isVisible()) {
+            return;
+        }
+
+        g.drawImage(boss.getImage(), boss.getX(), boss.getY(), this);
+
+        int barWidth = 300;
+        int barX = (BOARD_WIDTH - barWidth) / 2;
+        int healthWidth = barWidth * boss.getHealth() / Boss.MAX_HEALTH;
+        g.setColor(Color.darkGray);
+        g.fillRect(barX, 20, barWidth, 14);
+        g.setColor(Color.red);
+        g.fillRect(barX, 20, healthWidth, 14);
+        g.setColor(Color.white);
+        g.drawRect(barX, 20, barWidth, 14);
+        g.drawString("FINAL BOSS", barX, 17);
+    }
+
+    private void drawBossBullets(Graphics g) {
+        for (BossBullet bullet : bossBullets) {
+            if (bullet.isVisible()) {
+                g.drawImage(bullet.getImage(), bullet.getX(), bullet.getY(), this);
+            }
+        }
     }
 
     // Called when a MiniBoss is destroyed - it "splits" into 3 regular aliens
