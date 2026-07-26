@@ -9,7 +9,7 @@ public class Alien1 extends Enemy {
 
     public Alien1(int x, int y) {
         super(x, y);
-        // initEnemy(x, y);
+        initEnemy(x, y);
     }
 
     private void initEnemy(int x, int y) {
@@ -28,8 +28,10 @@ public class Alien1 extends Enemy {
         setImage(scaledImage);
     }
 
+    @Override
     public void act(int direction) {
-        this.y ++;
+        // Side-scrolling enemy: enter from the right and travel left.
+        this.x -= 2;
     }
 
     public Bomb getBomb() {

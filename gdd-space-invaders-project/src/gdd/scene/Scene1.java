@@ -27,6 +27,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -36,9 +37,11 @@ public class Scene1 extends JPanel {
     private static final int BACKGROUND_SCROLL_SPEED = 1;
     private static final int BOSS_SPAWN_FRAME = 650;
     private static final int MAX_PLAYER_SHOTS = 8;
+    private static final int ENEMY_SPAWN_X = BOARD_WIDTH + 20;
 
     private final Game game;
     private final HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
+    private final Random randomizer = new Random();
 
     private int frame;
     private int direction;
@@ -439,7 +442,11 @@ public class Scene1 extends JPanel {
         updateEnemies();
         updateBoss();
         updateBossBullets();
-        updateShots();
+        checkPlayerCollisions();
+
+        if (inGame) {
+            updateShots();
+        }
     }
 
     private void updateBackground() {
@@ -461,8 +468,8 @@ public class Scene1 extends JPanel {
             case "Alien1":
                 enemies.add(
                         new Alien1(
-                                spawnDetails.x,
-                                spawnDetails.y
+                                ENEMY_SPAWN_X,
+                                randomEnemyY(ALIEN_HEIGHT)
                         )
                 );
                 break;
@@ -470,8 +477,8 @@ public class Scene1 extends JPanel {
             case "MiniBoss":
                 enemies.add(
                         new MiniBoss(
-                                spawnDetails.x,
-                                spawnDetails.y
+                                ENEMY_SPAWN_X,
+                                randomEnemyY(ALIEN_HEIGHT * 3)
                         )
                 );
                 break;
@@ -479,8 +486,8 @@ public class Scene1 extends JPanel {
             case "PowerUp-SpeedUp":
                 powerups.add(
                         new SpeedUp(
-                                spawnDetails.x,
-                                spawnDetails.y
+                                ENEMY_SPAWN_X,
+                                randomEnemyY(32)
                         )
                 );
                 break;
@@ -537,11 +544,27 @@ public class Scene1 extends JPanel {
     }
 
     private void updateEnemies() {
+        List<Enemy> enemiesToRemove = new ArrayList<>();
+
         for (Enemy enemy : enemies) {
-            if (enemy.isVisible()) {
-                enemy.act(direction);
+            if (!enemy.isVisible()) {
+                enemiesToRemove.add(enemy);
+                continue;
+            }
+
+            enemy.act(direction);
+
+            int enemyWidth = enemy.getImage() == null
+                    ? ALIEN_WIDTH
+                    : enemy.getImage().getWidth(null);
+
+            if (enemy.getX() + enemyWidth < 0) {
+                enemy.die();
+                enemiesToRemove.add(enemy);
             }
         }
+
+        enemies.removeAll(enemiesToRemove);
     }
 
     private void updateBoss() {
@@ -574,9 +597,9 @@ public class Scene1 extends JPanel {
                     && player.isVisible()
                     && bullet.collidesWith(player)) {
                 bullet.die();
-                player.setDying(true);
                 bulletsToRemove.add(bullet);
-                continue;
+                killPlayer("You were hit by the boss!");
+                break;
             }
 
             if (!bullet.isVisible()) {
@@ -585,6 +608,53 @@ public class Scene1 extends JPanel {
         }
 
         bossBullets.removeAll(bulletsToRemove);
+    }
+
+    private int randomEnemyY(int spriteHeight) {
+        int topMargin = 70;
+        int bottomMargin = 30;
+        int maximumY = BOARD_HEIGHT - spriteHeight - bottomMargin;
+
+        if (maximumY <= topMargin) {
+            return Math.max(0, (BOARD_HEIGHT - spriteHeight) / 2);
+        }
+
+        return topMargin + randomizer.nextInt(maximumY - topMargin + 1);
+    }
+
+    private void checkPlayerCollisions() {
+        if (!inGame || player == null || !player.isVisible()) {
+            return;
+        }
+
+        for (Enemy enemy : enemies) {
+            if (enemy.isVisible() && player.collidesWith(enemy)) {
+                String collisionMessage = enemy instanceof MiniBoss
+                        ? "You crashed into the mini boss!"
+                        : "You crashed into an alien!";
+
+                killPlayer(collisionMessage);
+                return;
+            }
+        }
+
+        if (boss != null
+                && boss.isVisible()
+                && player.collidesWith(boss)) {
+            killPlayer("You crashed into the final boss!");
+        }
+    }
+
+    private void killPlayer(String gameOverMessage) {
+        if (!inGame || player == null) {
+            return;
+        }
+
+        explosions.add(new Explosion(player.getX(), player.getY()));
+        player.setDying(true);
+        player.die();
+        bossBullets.clear();
+        finishGame(gameOverMessage);
     }
 
     private void updateShots() {
@@ -739,11 +809,19 @@ public class Scene1 extends JPanel {
         List<Enemy> spawnedEnemies = new ArrayList<>();
         int spacing = ALIEN_WIDTH + 10;
 
-        spawnedEnemies.add(new Alien1(x - spacing, y));
-        spawnedEnemies.add(new Alien1(x, y));
-        spawnedEnemies.add(new Alien1(x + spacing, y));
+        spawnedEnemies.add(new Alien1(x - spacing, clampSplitY(y - spacing)));
+        spawnedEnemies.add(new Alien1(x, clampSplitY(y)));
+        spawnedEnemies.add(new Alien1(x + spacing, clampSplitY(y + spacing)));
 
         return spawnedEnemies;
+    }
+
+    private int clampSplitY(int requestedY) {
+        int topMargin = 70;
+        int bottomMargin = 30;
+        int maximumY = BOARD_HEIGHT - ALIEN_HEIGHT - bottomMargin;
+
+        return Math.max(topMargin, Math.min(requestedY, maximumY));
     }
 
     private void finishGame(String resultMessage) {

@@ -94,8 +94,8 @@ public class MiniBoss extends Enemy {
     @Override
     public void act(int direction) {
 
-        // Simple downward drift like the other aliens; tune as needed
-        this.y += 1;
+        // Side-scrolling mini boss: enter from the right and travel left.
+        this.x -= 1;
 
         tickFlash();
     }
