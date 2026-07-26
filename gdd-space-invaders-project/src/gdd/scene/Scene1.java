@@ -7,6 +7,9 @@ import gdd.SpawnDetails;
 import gdd.powerup.PowerUp;
 import gdd.powerup.SpeedUp;
 import gdd.sprite.Alien1;
+import gdd.sprite.Boss;
+import gdd.sprite.BossAttack;
+import gdd.sprite.BossBullet;
 import gdd.sprite.Enemy;
 import gdd.sprite.Explosion;
 import gdd.sprite.MiniBoss;
@@ -38,27 +41,8 @@ public class Scene1 extends JPanel {
     private List<Enemy> enemies;
     private List<Explosion> explosions;
     private List<Shot> shots;
-
     private Player player;
-
-    /*
-     * Background image variables
-     */
-    private Image backgroundImage;
-
-    /*
-     * Horizontal position of the first background image.
-     */
-    private int backgroundX = 0;
-
-    /*
-     * Background movement speed.
-     *
-     * 1 = slow
-     * 2 = medium
-     * 3 = fast
-     */
-    private static final int BACKGROUND_SCROLL_SPEED = 1;
+    // private Shot shot;
 
     final int BLOCKHEIGHT = 50;
     final int BLOCKWIDTH = 50;
@@ -123,6 +107,7 @@ public class Scene1 extends JPanel {
 
     private int lastRowToShow;
     private int firstRowToShow;
+    private static final int BOSS_SPAWN_FRAME = 650;
 
     public Scene1(Game game) {
 
@@ -341,6 +326,10 @@ public class Scene1 extends JPanel {
         powerups = new ArrayList<>();
         explosions = new ArrayList<>();
         shots = new ArrayList<>();
+        bossBullets = new ArrayList<>();
+        bossAttack = new BossAttack();
+        boss = null;
+        bossSpawned = false;
 
         player = new Player();
     }
@@ -673,6 +662,8 @@ public class Scene1 extends JPanel {
             drawAliens(g);
             drawPlayer(g);
             drawShot(g);
+            drawBoss(g);
+            drawBossBullets(g);
 
             /*
              * Draw frame information last so it remains visible.
@@ -762,30 +753,13 @@ public class Scene1 extends JPanel {
 
     private void update() {
 
-        /*
-         * Move the background from right to left.
-         */
-        backgroundX -= BACKGROUND_SCROLL_SPEED;
 
-        /*
-         * Once the first image completely leaves the screen,
-         * reset it to its original position.
-         */
-        if (backgroundX <= -BOARD_WIDTH) {
-            backgroundX = 0;
-        }
-
-        /*
-         * Check whether something must spawn
-         * during the current frame.
-         */
-        SpawnDetails spawnDetails =
-                spawnMap.get(frame);
-
-        if (spawnDetails != null) {
-
-            switch (spawnDetails.type) {
-
+        // Check enemy spawn
+        // TODO this approach can only spawn one enemy at a frame
+        SpawnDetails sd = spawnMap.get(frame);
+        if (sd != null) {
+            // Create a new enemy based on the spawn details
+            switch (sd.type) {
                 case "Alien1":
 
                     Enemy enemy =
@@ -867,6 +841,26 @@ public class Scene1 extends JPanel {
          */
         player.act();
 
+        if (boss != null && boss.isVisible()) {
+            boss.act();
+            bossBullets.addAll(bossAttack.update(boss, player));
+        }
+
+        List<BossBullet> bossBulletsToRemove = new ArrayList<>();
+        for (BossBullet bullet : bossBullets) {
+            if (bullet.isVisible()) {
+                bullet.act();
+                if (bullet.collidesWith(player)) {
+                    bullet.die();
+                    player.setDying(true);
+                    bossBulletsToRemove.add(bullet);
+                }
+            } else {
+                bossBulletsToRemove.add(bullet);
+            }
+        }
+        bossBullets.removeAll(bossBulletsToRemove);
+
         /*
          * Update power-ups.
          */
@@ -909,6 +903,23 @@ public class Scene1 extends JPanel {
 
                 int shotX = shot.getX();
                 int shotY = shot.getY();
+
+                if (boss != null && boss.isVisible() && shot.collidesWith(boss)) {
+                    boss.takeDamage(1);
+                    shot.die();
+                    shotsToRemove.add(shot);
+
+                    if (boss.isDying()) {
+                        explosions.add(new Explosion(
+                                boss.getX() + Boss.WIDTH / 2,
+                                boss.getY() + Boss.HEIGHT / 2));
+                        boss.die();
+                        bossBullets.clear();
+                        inGame = false;
+                        message = "Final boss defeated!";
+                    }
+                    continue;
+                }
 
                 for (Enemy enemy : enemies) {
 
@@ -1028,44 +1039,84 @@ public class Scene1 extends JPanel {
 
         shots.removeAll(shotsToRemove);
         enemies.addAll(enemiesToAdd);
+
+        // enemies
+        // for (Enemy enemy : enemies) {
+        //     int x = enemy.getX();
+        //     if (x >= BOARD_WIDTH - BORDER_RIGHT && direction != -1) {
+        //         direction = -1;
+        //         for (Enemy e2 : enemies) {
+        //             e2.setY(e2.getY() + GO_DOWN);
+        //         }
+        //     }
+        //     if (x <= BORDER_LEFT && direction != 1) {
+        //         direction = 1;
+        //         for (Enemy e : enemies) {
+        //             e.setY(e.getY() + GO_DOWN);
+        //         }
+        //     }
+        // }
+        // for (Enemy enemy : enemies) {
+        //     if (enemy.isVisible()) {
+        //         int y = enemy.getY();
+        //         if (y > GROUND - ALIEN_HEIGHT) {
+        //             inGame = false;
+        //             message = "Invasion!";
+        //         }
+        //         enemy.act(direction);
+        //     }
+        // }
+        // bombs - collision detection
+        // Bomb is with enemy, so it loops over enemies
+        /*
+        for (Enemy enemy : enemies) {
+
+            int chance = randomizer.nextInt(15);
+            Enemy.Bomb bomb = enemy.getBomb();
+
+            if (chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
+
+                bomb.setDestroyed(false);
+                bomb.setX(enemy.getX());
+                bomb.setY(enemy.getY());
+            }
+
+            int bombX = bomb.getX();
+            int bombY = bomb.getY();
+            int playerX = player.getX();
+            int playerY = player.getY();
+
+            if (player.isVisible() && !bomb.isDestroyed()
+                    && bombX >= (playerX)
+                    && bombX <= (playerX + PLAYER_WIDTH)
+                    && bombY >= (playerY)
+                    && bombY <= (playerY + PLAYER_HEIGHT)) {
+
+                var ii = new ImageIcon(IMG_EXPLOSION);
+                player.setImage(ii.getImage());
+                player.setDying(true);
+                bomb.setDestroyed(true);
+            }
+
+            if (!bomb.isDestroyed()) {
+                bomb.setY(bomb.getY() + 1);
+                if (bomb.getY() >= GROUND - BOMB_HEIGHT) {
+                    bomb.setDestroyed(true);
+                }
+            }
+        }
+         */
     }
 
-    /*
-     * Called when a MiniBoss is destroyed.
-     *
-     * It splits into three regular aliens.
-     */
-    private List<Enemy> spawnAliensFromMiniBoss(
-            int x,
-            int y
-    ) {
+    // Called when a MiniBoss is destroyed - it "splits" into 3 regular aliens
+    private List<Enemy> spawnAliensFromMiniBoss(int x, int y) {
 
-        List<Enemy> spawned =
-                new ArrayList<>();
+        List<Enemy> spawned = new ArrayList<>();
+        int spacing = ALIEN_WIDTH + 10;
 
-        int spacing =
-                ALIEN_WIDTH + 10;
-
-        spawned.add(
-                new Alien1(
-                        x - spacing,
-                        y
-                )
-        );
-
-        spawned.add(
-                new Alien1(
-                        x,
-                        y
-                )
-        );
-
-        spawned.add(
-                new Alien1(
-                        x + spacing,
-                        y
-                )
-        );
+        spawned.add(new Alien1(x - spacing, y));
+        spawned.add(new Alien1(x, y));
+        spawned.add(new Alien1(x + spacing, y));
 
         return spawned;
     }

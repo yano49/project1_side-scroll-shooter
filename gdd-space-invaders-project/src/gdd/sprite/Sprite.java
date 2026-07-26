@@ -17,7 +17,9 @@ abstract public class Sprite {
         visible = true;
     }
 
-    abstract public void act();
+    public void act() {
+        // Default no-op for sprites whose movement is managed by the scene.
+    }
 
     public boolean collidesWith(Sprite other) {
         if (other == null || !this.isVisible() || !other.isVisible()) {

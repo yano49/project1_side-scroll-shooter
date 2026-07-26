@@ -37,6 +37,8 @@ public class Global {
     public static final String IMG_POWERUP_SPEEDUP = "gdd-space-invaders-project/src/images/powerup-s.png";
     public static final String IMG_MINIBOSS = "gdd-space-invaders-project/src/images/miniBoss.png";
     public static final String IMG_BACKGROUND = "gdd-space-invaders-project/src/images/background.png";
+    public static final String IMG_BOSS = "gdd-space-invaders-project/src/images/boss.png";
+    public static final String IMG_BOSS_BULLET = "gdd-space-invaders-project/src/images/boss-bullet.png";
 
     // Mini boss tuning
     public static final int MINIBOSS_HEALTH = 3; 
