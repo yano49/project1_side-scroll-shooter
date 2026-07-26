@@ -1,7 +1,12 @@
 package gdd.sprite;
 
 import static gdd.Global.*;
-import javax.swing.ImageIcon;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 public class Explosion extends Sprite {
 
@@ -16,13 +21,28 @@ public class Explosion extends Sprite {
         this.x = x;
         this.y = y;
 
-        var ii = new ImageIcon(IMG_EXPLOSION);
+        try {
 
-        // Scale the image to use the global scaling factor
-        var scaledImage = ii.getImage().getScaledInstance(ii.getIconWidth() * SCALE_FACTOR,
-                ii.getIconHeight() * SCALE_FACTOR,
-                java.awt.Image.SCALE_SMOOTH);
-        setImage(scaledImage);
+            BufferedImage sheet = ImageIO.read(
+                    new File("gdd-space-invaders-project/src/images/spites.png"));
+        
+            // Change these coordinates to the explosion sprite you want
+            BufferedImage explosion = sheet.getSubimage(
+                    304,   // X
+                    32,   // Y
+                    8,   // Width
+                    14);  // Height
+        
+            Image img = explosion.getScaledInstance(
+                explosion.getWidth() * SCALE_FACTOR,
+                explosion.getHeight() * SCALE_FACTOR,
+                Image.SCALE_REPLICATE);
+        
+            setImage(img);
+        
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void act(int direction) {

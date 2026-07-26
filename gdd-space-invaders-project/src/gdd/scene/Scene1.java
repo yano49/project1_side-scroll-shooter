@@ -456,15 +456,15 @@ public class Scene1 extends JPanel {
                     }
                 }
 
-                int y = shot.getY();
+                int x = shot.getX();
                 // y -= 4;
-                y -= 20;
+                x += 20;
 
-                if (y < 0) {
+                if (x > BOARD_WIDTH) {
                     shot.die();
                     shotsToRemove.add(shot);
                 } else {
-                    shot.setY(y);
+                    shot.setX(x);
                 }
             }
         }
@@ -571,11 +571,33 @@ public class Scene1 extends JPanel {
             int key = e.getKeyCode();
 
             if (key == KeyEvent.VK_SPACE && inGame) {
-                System.out.println("Shots: " + shots.size());
-                if (shots.size() < 4) {
-                    // Create a new shot and add it to the list
-                    Shot shot = new Shot(x, y);
-                    shots.add(shot);
+
+                if (shots.size() < 8) {
+            
+                    switch (player.getWeaponLevel()) {
+            
+                        case 1:
+                            shots.add(new Shot(x, y));
+                            break;
+            
+                        case 2:
+                            shots.add(new Shot(x, y, -10));
+                            shots.add(new Shot(x, y, 10));
+                            break;
+            
+                        case 3:
+                            shots.add(new Shot(x, y, -20));
+                            shots.add(new Shot(x, y));
+                            shots.add(new Shot(x, y, 20));
+                            break;
+            
+                        case 4:
+                            shots.add(new Shot(x, y, -30));
+                            shots.add(new Shot(x, y, -10));
+                            shots.add(new Shot(x, y, 10));
+                            shots.add(new Shot(x, y, 30));
+                            break;
+                    }
                 }
             }
 
