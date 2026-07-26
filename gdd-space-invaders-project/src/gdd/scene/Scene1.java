@@ -16,6 +16,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -32,12 +33,32 @@ import javax.swing.Timer;
 public class Scene1 extends JPanel {
 
     private int frame = 0;
+
     private List<PowerUp> powerups;
     private List<Enemy> enemies;
     private List<Explosion> explosions;
     private List<Shot> shots;
+
     private Player player;
-    // private Shot shot;
+
+    /*
+     * Background image variables
+     */
+    private Image backgroundImage;
+
+    /*
+     * Horizontal position of the first background image.
+     */
+    private int backgroundX = 0;
+
+    /*
+     * Background movement speed.
+     *
+     * 1 = slow
+     * 2 = medium
+     * 3 = fast
+     */
+    private static final int BACKGROUND_SCROLL_SPEED = 1;
 
     final int BLOCKHEIGHT = 50;
     final int BLOCKWIDTH = 50;
@@ -50,15 +71,23 @@ public class Scene1 extends JPanel {
     private boolean inGame = true;
     private String message = "Game Over";
 
-    private final Dimension d = new Dimension(BOARD_WIDTH, BOARD_HEIGHT);
+    private final Dimension d =
+            new Dimension(BOARD_WIDTH, BOARD_HEIGHT);
+
     private final Random randomizer = new Random();
 
     private Timer timer;
     private final Game game;
 
     private int currentRow = -1;
-    // TODO load this map from a file
     private int mapOffset = 0;
+
+    /*
+     * The old MAP can remain in the class.
+     *
+     * It is no longer drawn because drawMap(g)
+     * is not called inside doDrawing().
+     */
     private final int[][] MAP = {
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -72,6 +101,7 @@ public class Scene1 extends JPanel {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+
         {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -86,45 +116,169 @@ public class Scene1 extends JPanel {
         {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
     };
 
-    private HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
+    private HashMap<Integer, SpawnDetails> spawnMap =
+            new HashMap<>();
+
     private AudioPlayer audioPlayer;
+
     private int lastRowToShow;
     private int firstRowToShow;
 
     public Scene1(Game game) {
+
         this.game = game;
-        // initBoard();
-        // gameInit();
+
         loadSpawnDetails();
     }
 
+    /*
+     * Load the background image.
+     */
+    private void loadBackgroundImage() {
+
+        ImageIcon backgroundIcon =
+                new ImageIcon(IMG_BACKGROUND);
+
+        backgroundImage = backgroundIcon.getImage();
+
+        if (backgroundIcon.getIconWidth() <= 0
+                || backgroundIcon.getIconHeight() <= 0) {
+
+            System.err.println(
+                    "Could not load background image: "
+                    + IMG_BACKGROUND
+            );
+        }
+    }
+
     private void initAudio() {
+
         try {
-            String filePath = "gdd-space-invaders-project/src/audio/scene1.wav";
+
+            String filePath =
+                    "gdd-space-invaders-project/src/audio/scene1.wav";
+
             audioPlayer = new AudioPlayer(filePath);
             audioPlayer.play();
+
         } catch (Exception e) {
-            System.err.println("Error initializing audio player: " + e.getMessage());
+
+            System.err.println(
+                    "Error initializing audio player: "
+                    + e.getMessage()
+            );
         }
     }
 
     private void loadSpawnDetails() {
-        // TODO load this from a file
-        spawnMap.put(50, new SpawnDetails("PowerUp-SpeedUp", 100, 0));
-        spawnMap.put(200, new SpawnDetails("Alien1", 200, 0));
-        spawnMap.put(300, new SpawnDetails("Alien1", 300, 0));
 
-        spawnMap.put(400, new SpawnDetails("Alien1", 400, 0));
-        spawnMap.put(401, new SpawnDetails("Alien1", 450, 0));
-        spawnMap.put(402, new SpawnDetails("Alien1", 500, 0));
-        spawnMap.put(403, new SpawnDetails("Alien1", 550, 0));
+        spawnMap.put(
+                50,
+                new SpawnDetails(
+                        "PowerUp-SpeedUp",
+                        100,
+                        0
+                )
+        );
 
-        spawnMap.put(500, new SpawnDetails("Alien1", 100, 0));
-        spawnMap.put(501, new SpawnDetails("Alien1", 150, 0));
-        spawnMap.put(502, new SpawnDetails("Alien1", 200, 0));
-        spawnMap.put(503, new SpawnDetails("Alien1", 350, 0));
+        spawnMap.put(
+                200,
+                new SpawnDetails(
+                        "Alien1",
+                        200,
+                        0
+                )
+        );
 
-        spawnMap.put(600, new SpawnDetails("MiniBoss", 300, 0));
+        spawnMap.put(
+                300,
+                new SpawnDetails(
+                        "Alien1",
+                        300,
+                        0
+                )
+        );
+
+        spawnMap.put(
+                400,
+                new SpawnDetails(
+                        "Alien1",
+                        400,
+                        0
+                )
+        );
+
+        spawnMap.put(
+                401,
+                new SpawnDetails(
+                        "Alien1",
+                        450,
+                        0
+                )
+        );
+
+        spawnMap.put(
+                402,
+                new SpawnDetails(
+                        "Alien1",
+                        500,
+                        0
+                )
+        );
+
+        spawnMap.put(
+                403,
+                new SpawnDetails(
+                        "Alien1",
+                        550,
+                        0
+                )
+        );
+
+        spawnMap.put(
+                500,
+                new SpawnDetails(
+                        "Alien1",
+                        100,
+                        0
+                )
+        );
+
+        spawnMap.put(
+                501,
+                new SpawnDetails(
+                        "Alien1",
+                        150,
+                        0
+                )
+        );
+
+        spawnMap.put(
+                502,
+                new SpawnDetails(
+                        "Alien1",
+                        200,
+                        0
+                )
+        );
+
+        spawnMap.put(
+                503,
+                new SpawnDetails(
+                        "Alien1",
+                        350,
+                        0
+                )
+        );
+
+        spawnMap.put(
+                600,
+                new SpawnDetails(
+                        "MiniBoss",
+                        300,
+                        0
+                )
+        );
     }
 
     private void initBoard() {
@@ -132,12 +286,29 @@ public class Scene1 extends JPanel {
     }
 
     public void start() {
+
         addKeyListener(new TAdapter());
+
         setFocusable(true);
         requestFocusInWindow();
+
         setBackground(Color.black);
 
-        timer = new Timer(1000 / 60, new GameCycle());
+        /*
+         * Load the city background before the game starts.
+         */
+        loadBackgroundImage();
+
+        /*
+         * Reset background position each time Scene1 starts.
+         */
+        backgroundX = 0;
+
+        timer = new Timer(
+                1000 / 60,
+                new GameCycle()
+        );
+
         timer.start();
 
         gameInit();
@@ -145,13 +316,22 @@ public class Scene1 extends JPanel {
     }
 
     public void stop() {
-        timer.stop();
+
+        if (timer != null) {
+            timer.stop();
+        }
+
         try {
+
             if (audioPlayer != null) {
                 audioPlayer.stop();
             }
+
         } catch (Exception e) {
-            System.err.println("Error closing audio player.");
+
+            System.err.println(
+                    "Error closing audio player."
+            );
         }
     }
 
@@ -162,76 +342,198 @@ public class Scene1 extends JPanel {
         explosions = new ArrayList<>();
         shots = new ArrayList<>();
 
-        // for (int i = 0; i < 4; i++) {
-        // for (int j = 0; j < 6; j++) {
-        // var enemy = new Enemy(ALIEN_INIT_X + (ALIEN_WIDTH + ALIEN_GAP) * j,
-        // ALIEN_INIT_Y + (ALIEN_HEIGHT + ALIEN_GAP) * i);
-        // enemies.add(enemy);
-        // }
-        // }
         player = new Player();
-        // shot = new Shot();
     }
 
+    /*
+     * Draw two copies of the background.
+     *
+     * The first image moves to the left.
+     * The second image follows immediately behind it.
+     *
+     * This creates a continuous scrolling effect.
+     */
+    private void drawScrollingBackground(Graphics g) {
+
+        if (backgroundImage == null) {
+
+            g.setColor(Color.BLACK);
+
+            g.fillRect(
+                    0,
+                    0,
+                    BOARD_WIDTH,
+                    BOARD_HEIGHT
+            );
+
+            return;
+        }
+
+        /*
+         * First background copy.
+         */
+        g.drawImage(
+                backgroundImage,
+                backgroundX,
+                0,
+                BOARD_WIDTH,
+                BOARD_HEIGHT,
+                this
+        );
+
+        /*
+         * Second background copy.
+         *
+         * It is placed immediately after the first image.
+         */
+        g.drawImage(
+                backgroundImage,
+                backgroundX + BOARD_WIDTH,
+                0,
+                BOARD_WIDTH,
+                BOARD_HEIGHT,
+                this
+        );
+    }
+
+    /*
+     * Old star-map drawing method.
+     *
+     * This method is kept so the existing project structure
+     * is not heavily changed, but it is no longer called.
+     */
     private void drawMap(Graphics g) {
-        // Draw scrolling starfield background
 
-        // Calculate smooth scrolling offset (1 pixel per frame)
-        int scrollOffset = (frame) % BLOCKHEIGHT;
+        int scrollOffset = frame % BLOCKHEIGHT;
 
-        // Calculate which rows to draw based on screen position
-        int baseRow = (frame) / BLOCKHEIGHT;
-        int rowsNeeded = (BOARD_HEIGHT / BLOCKHEIGHT) + 2; // +2 for smooth scrolling
+        int baseRow = frame / BLOCKHEIGHT;
 
-        // Loop through rows that should be visible on screen
-        for (int screenRow = 0; screenRow < rowsNeeded; screenRow++) {
-            // Calculate which MAP row to use (with wrapping)
-            int mapRow = (baseRow + screenRow) % MAP.length;
+        int rowsNeeded =
+                (BOARD_HEIGHT / BLOCKHEIGHT) + 2;
 
-            // Calculate Y position for this row
-            // int y = (screenRow * BLOCKHEIGHT) - scrollOffset;
-            int y = BOARD_HEIGHT - ( (screenRow * BLOCKHEIGHT) - scrollOffset );
+        for (
+                int screenRow = 0;
+                screenRow < rowsNeeded;
+                screenRow++
+        ) {
 
-            // Skip if row is completely off-screen
-            if (y > BOARD_HEIGHT || y < -BLOCKHEIGHT) {
+            int mapRow =
+                    (baseRow + screenRow) % MAP.length;
+
+            int y =
+                    BOARD_HEIGHT
+                    - (
+                        (screenRow * BLOCKHEIGHT)
+                        - scrollOffset
+                    );
+
+            if (
+                    y > BOARD_HEIGHT
+                    || y < -BLOCKHEIGHT
+            ) {
                 continue;
             }
 
-            // Draw each column in this row
-            for (int col = 0; col < MAP[mapRow].length; col++) {
+            for (
+                    int col = 0;
+                    col < MAP[mapRow].length;
+                    col++
+            ) {
+
                 if (MAP[mapRow][col] == 1) {
-                    // Calculate X position
+
                     int x = col * BLOCKWIDTH;
 
-                    // Draw a cluster of stars
-                    drawStarCluster(g, x, y, BLOCKWIDTH, BLOCKHEIGHT);
+                    drawStarCluster(
+                            g,
+                            x,
+                            y,
+                            BLOCKWIDTH,
+                            BLOCKHEIGHT
+                    );
                 }
             }
         }
-
     }
 
-    private void drawStarCluster(Graphics g, int x, int y, int width, int height) {
-        // Set star color to white
+    private void drawStarCluster(
+            Graphics g,
+            int x,
+            int y,
+            int width,
+            int height
+    ) {
+
         g.setColor(Color.WHITE);
 
-        // Draw multiple stars in a cluster pattern
-        // Main star (larger)
-        int centerX = x + width / 2;
-        int centerY = y + height / 2;
-        g.fillOval(centerX - 2, centerY - 2, 4, 4);
+        int centerX =
+                x + width / 2;
 
-        // Smaller surrounding stars
-        g.fillOval(centerX - 15, centerY - 10, 2, 2);
-        g.fillOval(centerX + 12, centerY - 8, 2, 2);
-        g.fillOval(centerX - 8, centerY + 12, 2, 2);
-        g.fillOval(centerX + 10, centerY + 15, 2, 2);
+        int centerY =
+                y + height / 2;
 
-        // Tiny stars for more detail
-        g.fillOval(centerX - 20, centerY + 5, 1, 1);
-        g.fillOval(centerX + 18, centerY - 15, 1, 1);
-        g.fillOval(centerX - 5, centerY - 18, 1, 1);
-        g.fillOval(centerX + 8, centerY + 20, 1, 1);
+        g.fillOval(
+                centerX - 2,
+                centerY - 2,
+                4,
+                4
+        );
+
+        g.fillOval(
+                centerX - 15,
+                centerY - 10,
+                2,
+                2
+        );
+
+        g.fillOval(
+                centerX + 12,
+                centerY - 8,
+                2,
+                2
+        );
+
+        g.fillOval(
+                centerX - 8,
+                centerY + 12,
+                2,
+                2
+        );
+
+        g.fillOval(
+                centerX + 10,
+                centerY + 15,
+                2,
+                2
+        );
+
+        g.fillOval(
+                centerX - 20,
+                centerY + 5,
+                1,
+                1
+        );
+
+        g.fillOval(
+                centerX + 18,
+                centerY - 15,
+                1,
+                1
+        );
+
+        g.fillOval(
+                centerX - 5,
+                centerY - 18,
+                1,
+                1
+        );
+
+        g.fillOval(
+                centerX + 8,
+                centerY + 20,
+                1,
+                1
+        );
     }
 
     private void drawAliens(Graphics g) {
@@ -240,7 +542,12 @@ public class Scene1 extends JPanel {
 
             if (enemy.isVisible()) {
 
-                g.drawImage(enemy.getImage(), enemy.getX(), enemy.getY(), this);
+                g.drawImage(
+                        enemy.getImage(),
+                        enemy.getX(),
+                        enemy.getY(),
+                        this
+                );
             }
 
             if (enemy.isDying()) {
@@ -252,16 +559,21 @@ public class Scene1 extends JPanel {
 
     private void drawPowreUps(Graphics g) {
 
-        for (PowerUp p : powerups) {
+        for (PowerUp powerUp : powerups) {
 
-            if (p.isVisible()) {
+            if (powerUp.isVisible()) {
 
-                g.drawImage(p.getImage(), p.getX(), p.getY(), this);
+                g.drawImage(
+                        powerUp.getImage(),
+                        powerUp.getX(),
+                        powerUp.getY(),
+                        this
+                );
             }
 
-            if (p.isDying()) {
+            if (powerUp.isDying()) {
 
-                p.die();
+                powerUp.die();
             }
         }
     }
@@ -270,7 +582,12 @@ public class Scene1 extends JPanel {
 
         if (player.isVisible()) {
 
-            g.drawImage(player.getImage(), player.getX(), player.getY(), this);
+            g.drawImage(
+                    player.getImage(),
+                    player.getX(),
+                    player.getY(),
+                    this
+            );
         }
 
         if (player.isDying()) {
@@ -285,30 +602,43 @@ public class Scene1 extends JPanel {
         for (Shot shot : shots) {
 
             if (shot.isVisible()) {
-                g.drawImage(shot.getImage(), shot.getX(), shot.getY(), this);
+
+                g.drawImage(
+                        shot.getImage(),
+                        shot.getX(),
+                        shot.getY(),
+                        this
+                );
             }
         }
     }
 
     private void drawBombing(Graphics g) {
 
-        // for (Enemy e : enemies) {
-        //     Enemy.Bomb b = e.getBomb();
-        //     if (!b.isDestroyed()) {
-        //         g.drawImage(b.getImage(), b.getX(), b.getY(), this);
-        //     }
-        // }
+        /*
+         * Enemy bombing is currently disabled
+         * in the original project.
+         */
     }
 
     private void drawExplosions(Graphics g) {
 
-        List<Explosion> toRemove = new ArrayList<>();
+        List<Explosion> toRemove =
+                new ArrayList<>();
 
         for (Explosion explosion : explosions) {
 
             if (explosion.isVisible()) {
-                g.drawImage(explosion.getImage(), explosion.getX(), explosion.getY(), this);
+
+                g.drawImage(
+                        explosion.getImage(),
+                        explosion.getX(),
+                        explosion.getY(),
+                        this
+                );
+
                 explosion.visibleCountDown();
+
                 if (!explosion.isVisible()) {
                     toRemove.add(explosion);
                 }
@@ -320,6 +650,7 @@ public class Scene1 extends JPanel {
 
     @Override
     public void paintComponent(Graphics g) {
+
         super.paintComponent(g);
 
         doDrawing(g);
@@ -327,26 +658,39 @@ public class Scene1 extends JPanel {
 
     private void doDrawing(Graphics g) {
 
-        g.setColor(Color.black);
-        g.fillRect(0, 0, d.width, d.height);
-
-        g.setColor(Color.white);
-        g.drawString("FRAME: " + frame, 10, 10);
-
-        g.setColor(Color.green);
+        /*
+         * Draw the background first.
+         *
+         * The player, enemies, shots and power-ups are
+         * drawn afterward so they appear above it.
+         */
+        drawScrollingBackground(g);
 
         if (inGame) {
 
-            drawMap(g);  // Draw background stars first
             drawExplosions(g);
             drawPowreUps(g);
             drawAliens(g);
             drawPlayer(g);
             drawShot(g);
 
+            /*
+             * Draw frame information last so it remains visible.
+             */
+            g.setColor(Color.WHITE);
+
+            g.drawString(
+                    "FRAME: " + frame,
+                    10,
+                    20
+            );
+
         } else {
 
-            if (timer.isRunning()) {
+            if (
+                    timer != null
+                    && timer.isRunning()
+            ) {
                 timer.stop();
             }
 
@@ -358,94 +702,216 @@ public class Scene1 extends JPanel {
 
     private void gameOver(Graphics g) {
 
-        g.setColor(Color.black);
-        g.fillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+        /*
+         * Keep the scrolling city visible behind
+         * the game-over message.
+         */
+        drawScrollingBackground(g);
 
-        g.setColor(new Color(0, 32, 48));
-        g.fillRect(50, BOARD_WIDTH / 2 - 30, BOARD_WIDTH - 100, 50);
-        g.setColor(Color.white);
-        g.drawRect(50, BOARD_WIDTH / 2 - 30, BOARD_WIDTH - 100, 50);
+        int boxX = 50;
+        int boxY = BOARD_HEIGHT / 2 - 30;
+        int boxWidth = BOARD_WIDTH - 100;
+        int boxHeight = 50;
 
-        var small = new Font("Helvetica", Font.BOLD, 14);
-        var fontMetrics = this.getFontMetrics(small);
+        g.setColor(
+                new Color(
+                        0,
+                        32,
+                        48,
+                        220
+                )
+        );
 
-        g.setColor(Color.white);
+        g.fillRect(
+                boxX,
+                boxY,
+                boxWidth,
+                boxHeight
+        );
+
+        g.setColor(Color.WHITE);
+
+        g.drawRect(
+                boxX,
+                boxY,
+                boxWidth,
+                boxHeight
+        );
+
+        Font small =
+                new Font(
+                        "Helvetica",
+                        Font.BOLD,
+                        14
+                );
+
+        var fontMetrics =
+                this.getFontMetrics(small);
+
         g.setFont(small);
-        g.drawString(message, (BOARD_WIDTH - fontMetrics.stringWidth(message)) / 2,
-                BOARD_WIDTH / 2);
+
+        g.drawString(
+                message,
+                (
+                    BOARD_WIDTH
+                    - fontMetrics.stringWidth(message)
+                ) / 2,
+                BOARD_HEIGHT / 2
+        );
     }
 
     private void update() {
 
+        /*
+         * Move the background from right to left.
+         */
+        backgroundX -= BACKGROUND_SCROLL_SPEED;
 
-        // Check enemy spawn
-        // TODO this approach can only spawn one enemy at a frame
-        SpawnDetails sd = spawnMap.get(frame);
-        if (sd != null) {
-            // Create a new enemy based on the spawn details
-            switch (sd.type) {
+        /*
+         * Once the first image completely leaves the screen,
+         * reset it to its original position.
+         */
+        if (backgroundX <= -BOARD_WIDTH) {
+            backgroundX = 0;
+        }
+
+        /*
+         * Check whether something must spawn
+         * during the current frame.
+         */
+        SpawnDetails spawnDetails =
+                spawnMap.get(frame);
+
+        if (spawnDetails != null) {
+
+            switch (spawnDetails.type) {
+
                 case "Alien1":
-                    Enemy enemy = new Alien1(sd.x, sd.y);
+
+                    Enemy enemy =
+                            new Alien1(
+                                    spawnDetails.x,
+                                    spawnDetails.y
+                            );
+
                     enemies.add(enemy);
+
                     break;
-                // Add more cases for different enemy types if needed
+
                 case "Alien2":
-                    // Enemy enemy2 = new Alien2(sd.x, sd.y);
-                    // enemies.add(enemy2);
+
+                    /*
+                     * Alien2 can be added here later.
+                     */
                     break;
+
                 case "MiniBoss":
-                    System.out.println("Spawning MiniBoss at frame " + frame + " (x=" + sd.x + ", y=" + sd.y + ")");
-                    Enemy miniBoss = new MiniBoss(sd.x, sd.y);
+
+                    System.out.println(
+                            "Spawning MiniBoss at frame "
+                            + frame
+                            + " (x="
+                            + spawnDetails.x
+                            + ", y="
+                            + spawnDetails.y
+                            + ")"
+                    );
+
+                    Enemy miniBoss =
+                            new MiniBoss(
+                                    spawnDetails.x,
+                                    spawnDetails.y
+                            );
+
                     enemies.add(miniBoss);
+
                     break;
+
                 case "PowerUp-SpeedUp":
-                    // Handle speed up item spawn
-                    PowerUp speedUp = new SpeedUp(sd.x, sd.y);
+
+                    PowerUp speedUp =
+                            new SpeedUp(
+                                    spawnDetails.x,
+                                    spawnDetails.y
+                            );
+
                     powerups.add(speedUp);
+
                     break;
+
                 default:
-                    System.out.println("Unknown enemy type: " + sd.type);
+
+                    System.out.println(
+                            "Unknown enemy type: "
+                            + spawnDetails.type
+                    );
+
                     break;
             }
         }
 
-        if (deaths == NUMBER_OF_ALIENS_TO_DESTROY) {
+        if (
+                deaths
+                == NUMBER_OF_ALIENS_TO_DESTROY
+        ) {
+
             inGame = false;
+
             timer.stop();
+
             message = "Game won!";
         }
 
-        // player
+        /*
+         * Update player movement.
+         */
         player.act();
 
-        // Power-ups
-        for (PowerUp powerup : powerups) {
-            if (powerup.isVisible()) {
-                powerup.act();
-                if (powerup.collidesWith(player)) {
-                    powerup.upgrade(player);
+        /*
+         * Update power-ups.
+         */
+        for (PowerUp powerUp : powerups) {
+
+            if (powerUp.isVisible()) {
+
+                powerUp.act();
+
+                if (
+                        powerUp.collidesWith(player)
+                ) {
+                    powerUp.upgrade(player);
                 }
             }
         }
 
-        // Enemies
+        /*
+         * Update enemies.
+         */
         for (Enemy enemy : enemies) {
+
             if (enemy.isVisible()) {
                 enemy.act(direction);
             }
         }
 
-        // shot
-        List<Shot> shotsToRemove = new ArrayList<>();
-        List<Enemy> enemiesToAdd = new ArrayList<>();
+        /*
+         * Shot update and collision checking.
+         */
+        List<Shot> shotsToRemove =
+                new ArrayList<>();
+
+        List<Enemy> enemiesToAdd =
+                new ArrayList<>();
+
         for (Shot shot : shots) {
 
             if (shot.isVisible()) {
+
                 int shotX = shot.getX();
                 int shotY = shot.getY();
 
                 for (Enemy enemy : enemies) {
-                    // Collision detection: shot and enemy
+
                     int enemyX = enemy.getX();
                     int enemyY = enemy.getY();
 
@@ -453,207 +919,325 @@ public class Scene1 extends JPanel {
                     int hitHeight = ALIEN_HEIGHT;
 
                     if (enemy instanceof MiniBoss) {
-                        MiniBoss mb = (MiniBoss) enemy;
-                        hitWidth = mb.getSpriteWidth();
-                        hitHeight = mb.getSpriteHeight();
+
+                        MiniBoss miniBoss =
+                                (MiniBoss) enemy;
+
+                        hitWidth =
+                                miniBoss.getSpriteWidth();
+
+                        hitHeight =
+                                miniBoss.getSpriteHeight();
                     }
 
-                    if (enemy.isVisible() && shot.isVisible()
-                            && shotX >= (enemyX)
-                            && shotX <= (enemyX + hitWidth)
-                            && shotY >= (enemyY)
-                            && shotY <= (enemyY + hitHeight)) {
+                    boolean shotHitEnemy =
+                            enemy.isVisible()
+                            && shot.isVisible()
+                            && shotX >= enemyX
+                            && shotX <= enemyX + hitWidth
+                            && shotY >= enemyY
+                            && shotY <= enemyY + hitHeight;
+
+                    if (shotHitEnemy) {
 
                         shot.die();
                         shotsToRemove.add(shot);
 
-                        if (enemy instanceof MiniBoss) {
-                            // Mini boss soaks up multiple hits before it actually dies.
-                            // hit() flashes it and returns false until it's out of health.
-                            MiniBoss miniBoss = (MiniBoss) enemy;
-                            boolean destroyed = miniBoss.hit();
-                            
-                            // Add explosion effect on every hit (visual feedback)
-                            explosions.add(new Explosion(enemyX, enemyY));
+                        if (
+                                enemy
+                                instanceof MiniBoss
+                        ) {
+
+                            MiniBoss miniBoss =
+                                    (MiniBoss) enemy;
+
+                            boolean destroyed =
+                                    miniBoss.hit();
+
+                            explosions.add(
+                                    new Explosion(
+                                            enemyX,
+                                            enemyY
+                                    )
+                            );
 
                             if (destroyed) {
-                                var ii = new ImageIcon(IMG_EXPLOSION);
-                                enemy.setImage(ii.getImage());
+
+                                ImageIcon explosionIcon =
+                                        new ImageIcon(
+                                                IMG_EXPLOSION
+                                        );
+
+                                enemy.setImage(
+                                        explosionIcon.getImage()
+                                );
+
                                 enemy.setDying(true);
+
                                 deaths++;
-                                enemiesToAdd.addAll(spawnAliensFromMiniBoss(enemyX, enemyY));
+
+                                enemiesToAdd.addAll(
+                                        spawnAliensFromMiniBoss(
+                                                enemyX,
+                                                enemyY
+                                        )
+                                );
                             }
-                            // else: survives this hit, MiniBoss.hit() already queued its twinkle
 
                         } else {
-                            var ii = new ImageIcon(IMG_EXPLOSION);
-                            enemy.setImage(ii.getImage());
+
+                            ImageIcon explosionIcon =
+                                    new ImageIcon(
+                                            IMG_EXPLOSION
+                                    );
+
+                            enemy.setImage(
+                                    explosionIcon.getImage()
+                            );
+
                             enemy.setDying(true);
-                            explosions.add(new Explosion(enemyX, enemyY));
+
+                            explosions.add(
+                                    new Explosion(
+                                            enemyX,
+                                            enemyY
+                                    )
+                            );
+
                             deaths++;
                         }
                     }
                 }
 
                 int x = shot.getX();
-                // y -= 4;
+
                 x += 20;
 
                 if (x > BOARD_WIDTH) {
+
                     shot.die();
+
                     shotsToRemove.add(shot);
+
                 } else {
+
                     shot.setX(x);
                 }
             }
         }
+
         shots.removeAll(shotsToRemove);
         enemies.addAll(enemiesToAdd);
-
-        // enemies
-        // for (Enemy enemy : enemies) {
-        //     int x = enemy.getX();
-        //     if (x >= BOARD_WIDTH - BORDER_RIGHT && direction != -1) {
-        //         direction = -1;
-        //         for (Enemy e2 : enemies) {
-        //             e2.setY(e2.getY() + GO_DOWN);
-        //         }
-        //     }
-        //     if (x <= BORDER_LEFT && direction != 1) {
-        //         direction = 1;
-        //         for (Enemy e : enemies) {
-        //             e.setY(e.getY() + GO_DOWN);
-        //         }
-        //     }
-        // }
-        // for (Enemy enemy : enemies) {
-        //     if (enemy.isVisible()) {
-        //         int y = enemy.getY();
-        //         if (y > GROUND - ALIEN_HEIGHT) {
-        //             inGame = false;
-        //             message = "Invasion!";
-        //         }
-        //         enemy.act(direction);
-        //     }
-        // }
-        // bombs - collision detection
-        // Bomb is with enemy, so it loops over enemies
-        /*
-        for (Enemy enemy : enemies) {
-
-            int chance = randomizer.nextInt(15);
-            Enemy.Bomb bomb = enemy.getBomb();
-
-            if (chance == CHANCE && enemy.isVisible() && bomb.isDestroyed()) {
-
-                bomb.setDestroyed(false);
-                bomb.setX(enemy.getX());
-                bomb.setY(enemy.getY());
-            }
-
-            int bombX = bomb.getX();
-            int bombY = bomb.getY();
-            int playerX = player.getX();
-            int playerY = player.getY();
-
-            if (player.isVisible() && !bomb.isDestroyed()
-                    && bombX >= (playerX)
-                    && bombX <= (playerX + PLAYER_WIDTH)
-                    && bombY >= (playerY)
-                    && bombY <= (playerY + PLAYER_HEIGHT)) {
-
-                var ii = new ImageIcon(IMG_EXPLOSION);
-                player.setImage(ii.getImage());
-                player.setDying(true);
-                bomb.setDestroyed(true);
-            }
-
-            if (!bomb.isDestroyed()) {
-                bomb.setY(bomb.getY() + 1);
-                if (bomb.getY() >= GROUND - BOMB_HEIGHT) {
-                    bomb.setDestroyed(true);
-                }
-            }
-        }
-         */
     }
 
-    // Called when a MiniBoss is destroyed - it "splits" into 3 regular aliens
-    private List<Enemy> spawnAliensFromMiniBoss(int x, int y) {
+    /*
+     * Called when a MiniBoss is destroyed.
+     *
+     * It splits into three regular aliens.
+     */
+    private List<Enemy> spawnAliensFromMiniBoss(
+            int x,
+            int y
+    ) {
 
-        List<Enemy> spawned = new ArrayList<>();
-        int spacing = ALIEN_WIDTH + 10;
+        List<Enemy> spawned =
+                new ArrayList<>();
 
-        spawned.add(new Alien1(x - spacing, y));
-        spawned.add(new Alien1(x, y));
-        spawned.add(new Alien1(x + spacing, y));
+        int spacing =
+                ALIEN_WIDTH + 10;
+
+        spawned.add(
+                new Alien1(
+                        x - spacing,
+                        y
+                )
+        );
+
+        spawned.add(
+                new Alien1(
+                        x,
+                        y
+                )
+        );
+
+        spawned.add(
+                new Alien1(
+                        x + spacing,
+                        y
+                )
+        );
 
         return spawned;
     }
 
     private void doGameCycle() {
+
         frame++;
+
         update();
+
         repaint();
     }
 
-    private class GameCycle implements ActionListener {
+    private class GameCycle
+            implements ActionListener {
 
         @Override
-        public void actionPerformed(ActionEvent e) {
+        public void actionPerformed(
+                ActionEvent event
+        ) {
+
             doGameCycle();
         }
     }
 
-    private class TAdapter extends KeyAdapter {
+    private class TAdapter
+            extends KeyAdapter {
 
         @Override
-        public void keyReleased(KeyEvent e) {
-            player.keyReleased(e);
+        public void keyReleased(
+                KeyEvent event
+        ) {
+
+            player.keyReleased(event);
         }
 
         @Override
-        public void keyPressed(KeyEvent e) {
-            System.out.println("Scene2.keyPressed: " + e.getKeyCode());
+        public void keyPressed(
+                KeyEvent event
+        ) {
 
-            player.keyPressed(e);
+            System.out.println(
+                    "Scene1.keyPressed: "
+                    + event.getKeyCode()
+            );
+
+            player.keyPressed(event);
 
             int x = player.getX();
             int y = player.getY();
 
-            int key = e.getKeyCode();
+            int key =
+                    event.getKeyCode();
 
-            if (key == KeyEvent.VK_SPACE && inGame) {
+            if (
+                    key == KeyEvent.VK_SPACE
+                    && inGame
+            ) {
 
                 if (shots.size() < 8) {
-            
-                    switch (player.getWeaponLevel()) {
-            
+
+                    switch (
+                            player.getWeaponLevel()
+                    ) {
+
                         case 1:
-                            shots.add(new Shot(x, y));
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y
+                                    )
+                            );
+
                             break;
-            
+
                         case 2:
-                            shots.add(new Shot(x, y, -10));
-                            shots.add(new Shot(x, y, 10));
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y,
+                                            -10
+                                    )
+                            );
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y,
+                                            10
+                                    )
+                            );
+
                             break;
-            
+
                         case 3:
-                            shots.add(new Shot(x, y, -20));
-                            shots.add(new Shot(x, y));
-                            shots.add(new Shot(x, y, 20));
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y,
+                                            -20
+                                    )
+                            );
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y
+                                    )
+                            );
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y,
+                                            20
+                                    )
+                            );
+
                             break;
-            
+
                         case 4:
-                            shots.add(new Shot(x, y, -30));
-                            shots.add(new Shot(x, y, -10));
-                            shots.add(new Shot(x, y, 10));
-                            shots.add(new Shot(x, y, 30));
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y,
+                                            -30
+                                    )
+                            );
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y,
+                                            -10
+                                    )
+                            );
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y,
+                                            10
+                                    )
+                            );
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y,
+                                            30
+                                    )
+                            );
+
+                            break;
+
+                        default:
+
+                            shots.add(
+                                    new Shot(
+                                            x,
+                                            y
+                                    )
+                            );
+
                             break;
                     }
                 }
             }
-
         }
     }
 }
