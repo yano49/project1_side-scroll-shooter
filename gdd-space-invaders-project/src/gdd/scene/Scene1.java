@@ -9,6 +9,7 @@ import gdd.powerup.SpeedUp;
 import gdd.sprite.Alien1;
 import gdd.sprite.Enemy;
 import gdd.sprite.Explosion;
+import gdd.sprite.MiniBoss;
 import gdd.sprite.Player;
 import gdd.sprite.Shot;
 import java.awt.Color;
@@ -122,6 +123,8 @@ public class Scene1 extends JPanel {
         spawnMap.put(501, new SpawnDetails("Alien1", 150, 0));
         spawnMap.put(502, new SpawnDetails("Alien1", 200, 0));
         spawnMap.put(503, new SpawnDetails("Alien1", 350, 0));
+
+        spawnMap.put(600, new SpawnDetails("MiniBoss", 300, 0));
     }
 
     private void initBoard() {
@@ -390,6 +393,11 @@ public class Scene1 extends JPanel {
                     // Enemy enemy2 = new Alien2(sd.x, sd.y);
                     // enemies.add(enemy2);
                     break;
+                case "MiniBoss":
+                    System.out.println("Spawning MiniBoss at frame " + frame + " (x=" + sd.x + ", y=" + sd.y + ")");
+                    Enemy miniBoss = new MiniBoss(sd.x, sd.y);
+                    enemies.add(miniBoss);
+                    break;
                 case "PowerUp-SpeedUp":
                     // Handle speed up item spawn
                     PowerUp speedUp = new SpeedUp(sd.x, sd.y);
@@ -429,6 +437,7 @@ public class Scene1 extends JPanel {
 
         // shot
         List<Shot> shotsToRemove = new ArrayList<>();
+        List<Enemy> enemiesToAdd = new ArrayList<>();
         for (Shot shot : shots) {
 
             if (shot.isVisible()) {
@@ -440,19 +449,49 @@ public class Scene1 extends JPanel {
                     int enemyX = enemy.getX();
                     int enemyY = enemy.getY();
 
+                    int hitWidth = ALIEN_WIDTH;
+                    int hitHeight = ALIEN_HEIGHT;
+
+                    if (enemy instanceof MiniBoss) {
+                        MiniBoss mb = (MiniBoss) enemy;
+                        hitWidth = mb.getSpriteWidth();
+                        hitHeight = mb.getSpriteHeight();
+                    }
+
                     if (enemy.isVisible() && shot.isVisible()
                             && shotX >= (enemyX)
-                            && shotX <= (enemyX + ALIEN_WIDTH)
+                            && shotX <= (enemyX + hitWidth)
                             && shotY >= (enemyY)
-                            && shotY <= (enemyY + ALIEN_HEIGHT)) {
+                            && shotY <= (enemyY + hitHeight)) {
 
-                        var ii = new ImageIcon(IMG_EXPLOSION);
-                        enemy.setImage(ii.getImage());
-                        enemy.setDying(true);
-                        explosions.add(new Explosion(enemyX, enemyY));
-                        deaths++;
                         shot.die();
                         shotsToRemove.add(shot);
+
+                        if (enemy instanceof MiniBoss) {
+                            // Mini boss soaks up multiple hits before it actually dies.
+                            // hit() flashes it and returns false until it's out of health.
+                            MiniBoss miniBoss = (MiniBoss) enemy;
+                            boolean destroyed = miniBoss.hit();
+                            
+                            // Add explosion effect on every hit (visual feedback)
+                            explosions.add(new Explosion(enemyX, enemyY));
+
+                            if (destroyed) {
+                                var ii = new ImageIcon(IMG_EXPLOSION);
+                                enemy.setImage(ii.getImage());
+                                enemy.setDying(true);
+                                deaths++;
+                                enemiesToAdd.addAll(spawnAliensFromMiniBoss(enemyX, enemyY));
+                            }
+                            // else: survives this hit, MiniBoss.hit() already queued its twinkle
+
+                        } else {
+                            var ii = new ImageIcon(IMG_EXPLOSION);
+                            enemy.setImage(ii.getImage());
+                            enemy.setDying(true);
+                            explosions.add(new Explosion(enemyX, enemyY));
+                            deaths++;
+                        }
                     }
                 }
 
@@ -469,6 +508,7 @@ public class Scene1 extends JPanel {
             }
         }
         shots.removeAll(shotsToRemove);
+        enemies.addAll(enemiesToAdd);
 
         // enemies
         // for (Enemy enemy : enemies) {
@@ -536,6 +576,19 @@ public class Scene1 extends JPanel {
             }
         }
          */
+    }
+
+    // Called when a MiniBoss is destroyed - it "splits" into 3 regular aliens
+    private List<Enemy> spawnAliensFromMiniBoss(int x, int y) {
+
+        List<Enemy> spawned = new ArrayList<>();
+        int spacing = ALIEN_WIDTH + 10;
+
+        spawned.add(new Alien1(x - spacing, y));
+        spawned.add(new Alien1(x, y));
+        spawned.add(new Alien1(x + spacing, y));
+
+        return spawned;
     }
 
     private void doGameCycle() {

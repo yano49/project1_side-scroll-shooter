@@ -29,10 +29,15 @@ public class Global {
     public static final int PLAYER_HEIGHT = 20; // Doubled from 10
 
     // Images
-    public static final String IMG_ENEMY = "gdd-space-invaders-project/src/images/alien.png";
+    public static final String IMG_ENEMY = "gdd-space-invaders-project/src/images/AlienInvader_1.png";
     public static final String IMG_PLAYER = "gdd-space-invaders-project/src/images/player.png";
     public static final String IMG_SHOT = "gdd-space-invaders-project/src/images/shot.png";
     public static final String IMG_EXPLOSION = "gdd-space-invaders-project/src/images/explosion.png";
     public static final String IMG_TITLE = "gdd-space-invaders-project/src/images/title.png";
     public static final String IMG_POWERUP_SPEEDUP = "gdd-space-invaders-project/src/images/powerup-s.png";
+    public static final String IMG_MINIBOSS = "gdd-space-invaders-project/src/images/miniBoss.png";
+
+    // Mini boss tuning
+    public static final int MINIBOSS_HEALTH = 3; 
+    public static final int MINIBOSS_FLASH_DURATION = 50; // Flash duration when hit
 }
