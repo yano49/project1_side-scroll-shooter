@@ -33,13 +33,14 @@ public class Global {
     public static final String IMG_PLAYER = "gdd-space-invaders-project/src/images/player.png";
     public static final String IMG_SHOT = "gdd-space-invaders-project/src/images/shot.png";
     public static final String IMG_EXPLOSION = "gdd-space-invaders-project/src/images/explosion.png";
-    public static final String IMG_TITLE = "gdd-space-invaders-project/src/images/title.png";
+    public static final String IMG_TITLE = "gdd-space-invaders-project/src/images/titleImage.png";
     public static final String IMG_POWERUP_SPEEDUP = "gdd-space-invaders-project/src/images/powerup-s.png";
     public static final String IMG_MINIBOSS = "gdd-space-invaders-project/src/images/miniBoss.png";
     public static final String IMG_BACKGROUND = "gdd-space-invaders-project/src/images/background.png";
     public static final String IMG_SCENE2_BACKGROUND = "gdd-space-invaders-project/src/images/spacebackground.png";
     public static final String IMG_BOSS = "gdd-space-invaders-project/src/images/boss.png";
     public static final String IMG_BOSS_BULLET = "gdd-space-invaders-project/src/images/boss-bullet.png";
+    public static final String IMG_SPITES = "gdd-space-invaders-project/src/images/spites.png";
 
     // Mini boss tuning
     public static final int MINIBOSS_HEALTH = 3; 

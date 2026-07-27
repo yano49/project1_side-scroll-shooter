@@ -19,7 +19,7 @@ public class Game extends JFrame  {
         titleScene = new TitleScene(this);
         initUI();
         // loadTitle();
-        loadSceneTransition();
+        loadScene1();
     }
 
     private void initUI() {

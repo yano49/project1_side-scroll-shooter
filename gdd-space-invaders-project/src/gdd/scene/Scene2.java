@@ -1,10 +1,10 @@
 package gdd.scene;
 
+import gdd.AudioPlayer;
+import gdd.Game;
 import static gdd.Global.BOARD_HEIGHT;
 import static gdd.Global.BOARD_WIDTH;
 import static gdd.Global.IMG_SCENE2_BACKGROUND;
-import gdd.AudioPlayer;
-import gdd.Game;
 import gdd.sprite.Boss;
 import gdd.sprite.BossAttack;
 import gdd.sprite.BossBullet;
@@ -346,7 +346,7 @@ public class Scene2 extends JPanel {
                 case KeyEvent.VK_SPACE -> fire();
                 case KeyEvent.VK_R -> {
                     if (gameOver) {
-                        start();
+                        game.loadScene1();
                     }
                 }
                 default -> {
