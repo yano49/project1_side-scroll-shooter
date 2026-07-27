@@ -14,26 +14,23 @@ public class BossAttack {
             return bullets;
         }
 
-        /*
-         * Fire from the boss's left side because the player is positioned
-         * to the left in a side-scrolling shooter.
-         */
-        int originX = boss.getX() + 5;
-        int originY = boss.getY() + Boss.HEIGHT / 2;
+        int originX = boss.isVerticalFight()
+                ? boss.getX() + Boss.WIDTH / 2
+                : boss.getX() + 5;
+        int originY = boss.isVerticalFight()
+                ? boss.getY() + Boss.HEIGHT - 10
+                : boss.getY() + Boss.HEIGHT / 2;
 
         if (boss.getPhase() == BossPhase.PHASE_TWO) {
-            /*
-             * Three-way spread travelling mainly from right to left.
-             */
-            bullets.add(
-                    new BossBullet(originX, originY, -4.2, -2.2)
-            );
-            bullets.add(
-                    new BossBullet(originX, originY, -4.8, 0)
-            );
-            bullets.add(
-                    new BossBullet(originX, originY, -4.2, 2.2)
-            );
+            if (boss.isVerticalFight()) {
+                bullets.add(new BossBullet(originX, originY, -2.2, 4.2));
+                bullets.add(new BossBullet(originX, originY, 0, 4.8));
+                bullets.add(new BossBullet(originX, originY, 2.2, 4.2));
+            } else {
+                bullets.add(new BossBullet(originX, originY, -4.2, -2.2));
+                bullets.add(new BossBullet(originX, originY, -4.8, 0));
+                bullets.add(new BossBullet(originX, originY, -4.2, 2.2));
+            }
 
             cooldown = 35;
         } else {
