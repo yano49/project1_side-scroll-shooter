@@ -85,7 +85,7 @@ public class Scene1 extends JPanel {
     private static final long FIRST_MINIBOSS_SECONDS = 45L;
     private static final long REPEATING_MINIBOSS_START_SECONDS = 90L;
     private static final long MINIBOSS_INTERVAL_MS = 10_000L;
-    private static final int MAX_MINIBOSSES_TO_SPAWN = 2;
+    private static final int MAX_MINIBOSSES_TO_SPAWN = 30;
     private static final int GAME_OVER_DISPLAY_MS = 2000;
 
     private final Game game;
