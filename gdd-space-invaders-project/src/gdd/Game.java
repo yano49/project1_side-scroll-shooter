@@ -5,6 +5,7 @@ import gdd.scene.Scene1;
 import gdd.scene.Scene2;
 import gdd.scene.SceneTransition;
 import gdd.scene.TitleScene;
+import gdd.sprite.Player;
 import javax.swing.JFrame;
 
 public class Game extends JFrame  {
@@ -18,8 +19,9 @@ public class Game extends JFrame  {
     public Game() {
         titleScene = new TitleScene(this);
         initUI();
-        // loadTitle();
-        loadScene1();
+        loadTitle();
+        // loadSceneTransition();
+        // loadScene1();
     }
 
     private void initUI() {
@@ -54,8 +56,12 @@ public class Game extends JFrame  {
      * Member 1 should call this after miniBossKills reaches 30.
      */
     public void loadSceneTransition() {
+        loadSceneTransition(null);
+    }
+
+    public void loadSceneTransition(Player player) {
         stopActiveScenes();
-        sceneTransition = new SceneTransition(this);
+        sceneTransition = new SceneTransition(this, player);
         getContentPane().removeAll();
         add(sceneTransition);
         sceneTransition.start();
@@ -63,8 +69,19 @@ public class Game extends JFrame  {
     }
 
     public void loadScene2() {
+        loadScene2(0, null);
+    }
+
+    public void loadScene2(int initialBackgroundOffset) {
+        loadScene2(initialBackgroundOffset, null);
+    }
+
+    public void loadScene2(
+            int initialBackgroundOffset,
+            Player player
+    ) {
         stopActiveScenes();
-        scene2 = new Scene2(this);
+        scene2 = new Scene2(this, initialBackgroundOffset, player);
         getContentPane().removeAll();
         add(scene2);
         scene2.start();

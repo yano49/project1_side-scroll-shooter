@@ -64,6 +64,13 @@ public class Scene1 extends JPanel {
         0L, 2_000L, 2_000L, 2_000L, 4_000L
     };
 
+    private static final String NORMAL_SHOT_AUDIO =
+            "gdd-space-invaders-project/src/audio/lasershot.wav";
+    private static final String LASER_SHOT_AUDIO =
+            "gdd-space-invaders-project/src/audio/spshots.wav";
+    private static final String EXPLOSION_AUDIO =
+            "gdd-space-invaders-project/src/audio/explosiontrack.wav";
+
     private static final Path BEST_SCORE_FILE = Paths.get(
             System.getProperty("user.home"),
             ".gdd-space-invaders-best-score.txt"
@@ -78,7 +85,8 @@ public class Scene1 extends JPanel {
     private static final long FIRST_MINIBOSS_SECONDS = 45L;
     private static final long REPEATING_MINIBOSS_START_SECONDS = 90L;
     private static final long MINIBOSS_INTERVAL_MS = 10_000L;
-    private static final int MAX_MINIBOSSES_TO_SPAWN = 1;
+    private static final int MAX_MINIBOSSES_TO_SPAWN = 2;
+    private static final int GAME_OVER_DISPLAY_MS = 2000;
 
     private final Game game;
     private final HashMap<Integer, SpawnDetails> spawnMap = new HashMap<>();
@@ -111,6 +119,7 @@ public class Scene1 extends JPanel {
     private long lastMiniBossSpawnTime;
     private int miniBossSpawnCount;
     private String message;
+    private long gameOverEndTime;
 
     private List<PowerUp> powerups;
     private List<Enemy> enemies;
@@ -225,7 +234,7 @@ public class Scene1 extends JPanel {
     private void initAudio() {
         try {
             String filePath =
-                    "gdd-space-invaders-project/src/audio/scene1.wav";
+                    "gdd-space-invaders-project/src/audio/gameplay.wav";
 
             audioPlayer = new AudioPlayer(filePath);
             audioPlayer.play();
@@ -1325,10 +1334,11 @@ public class Scene1 extends JPanel {
 
                 if (destroyed) {
                     destroyEnemy(enemy);
+                    AudioPlayer.playOnce(EXPLOSION_AUDIO);
                     addScore(MINI_BOSS_SCORE);
 
                     if (miniBossSpawnCount >= MAX_MINIBOSSES_TO_SPAWN) {
-                        game.loadSceneTransition();
+                        game.loadSceneTransition(player);
                     } else {
                         enemiesToAdd.addAll(
                                 spawnAliensFromMiniBoss(
@@ -1340,6 +1350,7 @@ public class Scene1 extends JPanel {
                 }
             } else {
                 destroyEnemy(enemy);
+                AudioPlayer.playOnce(EXPLOSION_AUDIO);
                 addScore(NORMAL_ALIEN_SCORE);
             }
 
@@ -1398,15 +1409,25 @@ public class Scene1 extends JPanel {
 
         inGame = false;
         message = resultMessage;
+        gameOverEndTime = System.currentTimeMillis() + GAME_OVER_DISPLAY_MS;
 
         if (timer != null) {
             timer.stop();
         }
+
+        timer = new Timer(1000 / 60, new GameCycle());
+        timer.start();
     }
 
     private void doGameCycle() {
         if (!inGame) {
             repaint();
+            if (System.currentTimeMillis() >= gameOverEndTime) {
+                if (timer != null) {
+                    timer.stop();
+                }
+                game.loadTitle();
+            }
             return;
         }
 
@@ -1458,6 +1479,8 @@ public class Scene1 extends JPanel {
                 break;
         }
 
+        AudioPlayer.playOnce(NORMAL_SHOT_AUDIO);
+
         /*
          * One press consumes one ammo normally. During orange power-up,
          * shooting is unlimited and does not start a reload.
@@ -1488,6 +1511,7 @@ public class Scene1 extends JPanel {
         laserActiveUntil = now + LASER_ACTIVE_DURATION_MS;
         laserCooldownUntil = now + LASER_COOLDOWN_MS;
         lastLaserFireTime = 0L;
+        AudioPlayer.playOnce(LASER_SHOT_AUDIO);
     }
 
     private void updateLaserAbility() {
@@ -1517,6 +1541,7 @@ public class Scene1 extends JPanel {
         shots.add(Shot.createLaser(x, y, 0, 0));
         shots.add(Shot.createLaser(x, y, 12, 4));
 
+        AudioPlayer.playOnce(LASER_SHOT_AUDIO);
         lastLaserFireTime = now;
     }
 

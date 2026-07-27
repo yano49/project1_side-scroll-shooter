@@ -8,6 +8,8 @@ import java.util.Scanner;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.LineListener;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -22,23 +24,29 @@ public class AudioPlayer {
 
     AudioInputStream audioInputStream;
     String filePath;
+    private final boolean loop;
 
     // constructor to initialize streams and clip
     public AudioPlayer(String filePath)
             throws UnsupportedAudioFileException,
             IOException, LineUnavailableException {
+        this(filePath, true);
+    }
+
+    public AudioPlayer(String filePath, boolean loop)
+            throws UnsupportedAudioFileException,
+            IOException, LineUnavailableException {
         // create AudioInputStream object
         this.filePath = filePath;
-        audioInputStream
-                = AudioSystem.getAudioInputStream(new File(filePath).getAbsoluteFile());
+        this.loop = loop;
+        audioInputStream = AudioSystem.getAudioInputStream(
+                new File(filePath).getAbsoluteFile());
 
         // create clip reference
         clip = AudioSystem.getClip();
 
         // open audioInputStream to the clip
         clip.open(audioInputStream);
-
-        clip.loop(Clip.LOOP_CONTINUOUSLY);
     }
 
     public static void main(String[] args) {
@@ -99,14 +107,42 @@ public class AudioPlayer {
 
     // Method to play the audio
     public void play() {
-        //start the clip
-        clip.start();
+        if (loop) {
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+        } else {
+            clip.addLineListener(new LineListener() {
+                @Override
+                public void update(LineEvent event) {
+                    if (event.getType() == LineEvent.Type.STOP) {
+                        clip.close();
+                    }
+                }
+            });
+            clip.start();
+        }
 
         status = "play";
     }
 
-
-    // Method to pause the audio
+    public static void playOnce(String filePath) {
+        try {
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(
+                    new File(filePath).getAbsoluteFile());
+            Clip oneShot = AudioSystem.getClip();
+            oneShot.open(audioInputStream);
+            oneShot.addLineListener(new LineListener() {
+                @Override
+                public void update(LineEvent event) {
+                    if (event.getType() == LineEvent.Type.STOP) {
+                        oneShot.close();
+                    }
+                }
+            });
+            oneShot.start();
+        } catch (Exception exception) {
+            System.err.println("Could not play sound: " + exception.getMessage());
+        }
+    }
     public void pause() {
         if (status.equals("paused")) {
             System.out.println("audio is already paused");
@@ -170,7 +206,15 @@ public class AudioPlayer {
         audioInputStream = AudioSystem.getAudioInputStream(
                 new File(filePath).getAbsoluteFile());
         clip.open(audioInputStream);
-        clip.loop(Clip.LOOP_CONTINUOUSLY);
+        if (loop) {
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
+        } else {
+            clip.addLineListener(event -> {
+                if (event.getType() == LineEvent.Type.STOP) {
+                    clip.close();
+                }
+            });
+        }
     }
 
 }

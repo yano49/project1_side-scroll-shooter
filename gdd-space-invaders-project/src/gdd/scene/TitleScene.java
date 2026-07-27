@@ -5,6 +5,7 @@ import gdd.Game;
 import static gdd.Global.*;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -13,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
@@ -23,12 +25,26 @@ public class TitleScene extends JPanel {
     private AudioPlayer audioPlayer;
     private final Dimension d = new Dimension(BOARD_WIDTH, BOARD_HEIGHT);
     private Timer timer;
+    private JButton startButton;
     private Game game;
 
     public TitleScene(Game game) {
         this.game = game;
-        // initBoard();
-        // initTitle();
+        setLayout(null);
+
+        startButton = new JButton("Play");
+        startButton.setFocusable(false);
+        startButton.setFont(new Font("Helvetica", Font.BOLD, 18));
+        startButton.setBounds((BOARD_WIDTH - 200) / 2, BOARD_HEIGHT - 120, 200, 50);
+        startButton.setOpaque(true);
+        startButton.setContentAreaFilled(true);
+        startButton.setBackground(Color.DARK_GRAY);
+        startButton.setForeground(Color.WHITE);
+        startButton.setBorderPainted(true);
+        startButton.setBorder(javax.swing.BorderFactory.createLineBorder(Color.WHITE, 2));
+        startButton.setFocusPainted(false);
+        startButton.addActionListener(e -> game.loadScene1());
+        add(startButton);
     }
 
     private void initBoard() {
@@ -69,7 +85,7 @@ public class TitleScene extends JPanel {
 
     private void initAudio() {
         try {
-            String filePath = "gdd-space-invaders-project/src/audio/title.wav";
+            String filePath = "gdd-space-invaders-project/src/audio/titletrack.wav";
             audioPlayer = new AudioPlayer(filePath);
 
             audioPlayer.play();
@@ -91,7 +107,7 @@ public class TitleScene extends JPanel {
         g.setColor(Color.black);
         g.fillRect(0, 0, d.width, d.height);
 
-        g.drawImage(image, 0, -80, d.width, d.height, this);
+        g.drawImage(image, 0, 0, d.width, d.height, this);
 
         if (frame % 60 < 30) {
             g.setColor(Color.red);
@@ -99,17 +115,9 @@ public class TitleScene extends JPanel {
             g.setColor(Color.white);
         }
 
-        g.setFont(g.getFont().deriveFont(32f));
-        String text = "Press SPACE to Start";
-        int stringWidth = g.getFontMetrics().stringWidth(text);
-        int x = (d.width - stringWidth) / 2;
-        // int stringHeight = g.getFontMetrics().getAscent();
-        // int y = (d.height + stringHeight) / 2;
-        g.drawString(text, x, 600);
-
         g.setColor(Color.gray);
         g.setFont(g.getFont().deriveFont(10f));
-        g.drawString("Game by Chayapol", 10, 650);
+        g.drawString("Game by AWM", 10, 650);
 
         Toolkit.getDefaultToolkit().sync();
     }

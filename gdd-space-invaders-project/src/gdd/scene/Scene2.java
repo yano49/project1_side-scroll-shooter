@@ -33,8 +33,16 @@ public class Scene2 extends JPanel {
     private static final int PLAYER_MARGIN = 8;
     private static final int SHOT_SPEED = 14;
     private static final int MAX_SHOTS = 8;
+    private static final int PLAYER_HITBOX_WIDTH = 18;
+    private static final int PLAYER_HITBOX_HEIGHT = 28;
+    private static final int BOSS_BULLET_HITBOX_WIDTH = 12;
+    private static final int BOSS_BULLET_HITBOX_HEIGHT = 18;
     private static final String SCENE2_AUDIO =
-            "gdd-space-invaders-project/src/audio/scene1.wav";
+            "gdd-space-invaders-project/src/audio/finalboss.wav";
+    private static final String BOSS_DAMAGE_AUDIO =
+            "gdd-space-invaders-project/src/audio/damage.wav";
+    private static final String BOSS_DEFEAT_AUDIO =
+            "gdd-space-invaders-project/src/audio/ending.wav";
 
     private final Game game;
     private final Timer timer = new Timer(1000 / 60, new GameCycle());
@@ -42,6 +50,8 @@ public class Scene2 extends JPanel {
             new ImageIcon(IMG_SCENE2_BACKGROUND).getImage();
     private final List<Shot> shots = new ArrayList<>();
     private final List<BossBullet> bossBullets = new ArrayList<>();
+    private final int initialBackgroundOffset;
+    private final Player carriedPlayer;
 
     private Player player;
     private VerticalPlayerAnimation verticalPlane;
@@ -56,7 +66,21 @@ public class Scene2 extends JPanel {
     private boolean gameOver;
 
     public Scene2(Game game) {
+        this(game, 0, null);
+    }
+
+    public Scene2(Game game, int initialBackgroundOffset) {
+        this(game, initialBackgroundOffset, null);
+    }
+
+    public Scene2(
+            Game game,
+            int initialBackgroundOffset,
+            Player carriedPlayer
+    ) {
         this.game = game;
+        this.initialBackgroundOffset = initialBackgroundOffset;
+        this.carriedPlayer = carriedPlayer;
         setBackground(Color.BLACK);
         setFocusable(true);
         addKeyListener(new Controls());
@@ -64,7 +88,7 @@ public class Scene2 extends JPanel {
 
     public void start() {
         stopAudio();
-        player = new Player();
+        player = carriedPlayer != null ? carriedPlayer : new Player();
         verticalPlane = new VerticalPlayerAnimation();
         player.setImage(verticalPlane.getImage());
         player.setX((BOARD_WIDTH - player.getImage().getWidth(null)) / 2);
@@ -73,7 +97,7 @@ public class Scene2 extends JPanel {
         bossAttack = new BossAttack();
         shots.clear();
         bossBullets.clear();
-        backgroundOffset = 0;
+        backgroundOffset = initialBackgroundOffset;
         gameOver = false;
         resetKeys();
         timer.start();
@@ -130,7 +154,10 @@ public class Scene2 extends JPanel {
     }
 
     private void updatePlayer() {
+        int currentY = player.getY();
         player.act();
+        // Scene 2 owns movement; ignore any held Scene 1 vertical direction.
+        player.setY(currentY);
         verticalPlane.update();
         player.setImage(verticalPlane.getImage());
         int speed = player.getSpeed();
@@ -165,11 +192,13 @@ public class Scene2 extends JPanel {
 
             if (boss.isVisible() && shot.collidesWith(boss)) {
                 boss.takeDamage(1);
+                AudioPlayer.playOnce(BOSS_DAMAGE_AUDIO);
                 shot.die();
                 removed.add(shot);
                 if (boss.isDying()) {
                     boss.die();
                     bossBullets.clear();
+                    AudioPlayer.playOnce(BOSS_DEFEAT_AUDIO);
                     stop();
                     game.loadEndingScene();
                     return;
@@ -187,7 +216,7 @@ public class Scene2 extends JPanel {
                 continue;
             }
             bullet.act();
-            if (bullet.collidesWith(player)) {
+            if (bossBulletHitsPlayer(bullet)) {
                 bullet.die();
                 removed.add(bullet);
                 gameOver = true;
@@ -196,6 +225,29 @@ public class Scene2 extends JPanel {
             }
         }
         bossBullets.removeAll(removed);
+    }
+
+    private boolean bossBulletHitsPlayer(BossBullet bullet) {
+        int playerCenterX =
+                player.getX() + player.getImage().getWidth(null) / 2;
+        int playerCenterY =
+                player.getY() + player.getImage().getHeight(null) / 2;
+        int playerLeft = playerCenterX - PLAYER_HITBOX_WIDTH / 2;
+        int playerTop = playerCenterY - PLAYER_HITBOX_HEIGHT / 2;
+
+        int bulletCenterX =
+                bullet.getX() + bullet.getImage().getWidth(null) / 2;
+        int bulletCenterY =
+                bullet.getY() + bullet.getImage().getHeight(null) / 2;
+        int bulletLeft =
+                bulletCenterX - BOSS_BULLET_HITBOX_WIDTH / 2;
+        int bulletTop =
+                bulletCenterY - BOSS_BULLET_HITBOX_HEIGHT / 2;
+
+        return playerLeft < bulletLeft + BOSS_BULLET_HITBOX_WIDTH
+                && playerLeft + PLAYER_HITBOX_WIDTH > bulletLeft
+                && playerTop < bulletTop + BOSS_BULLET_HITBOX_HEIGHT
+                && playerTop + PLAYER_HITBOX_HEIGHT > bulletTop;
     }
 
     private void fire() {
